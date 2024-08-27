@@ -1,0 +1,30 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adf-trainingkishore-001"
+		},
+		"ls_blob_inputservice_connectionString": {
+			"value": ""
+		},
+		"ls_sqldb_password": {
+			"value": ""
+		},
+		"ls_sqldb_properties_typeProperties_server": {
+			"value": "sqlserver-trainingkishore-001.database.windows.net"
+		},
+		"ls_sqldb_properties_typeProperties_database": {
+			"value": "sqldb-trainingkishore-001"
+		},
+		"ls_sqldb_properties_typeProperties_userName": {
+			"value": "dbadmin"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
