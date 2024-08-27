@@ -1,0 +1,89 @@
+{
+	"name": "pl_reporting",
+	"properties": {
+		"activities": [
+			{
+				"name": "generateReport",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_final_report",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"CustomerDetailsPrep": {
+								"schema": {
+									"value": "@pipeline().parameters.source_schema",
+									"type": "Expression"
+								},
+								"table": {
+									"value": "@pipeline().parameters.source_customer_table",
+									"type": "Expression"
+								}
+							},
+							"OrderDetailsPerp": {
+								"schema": {
+									"value": "@pipeline().parameters.source_schema",
+									"type": "Expression"
+								},
+								"table": {
+									"value": "@pipeline().parameters.source_order_table",
+									"type": "Expression"
+								}
+							},
+							"GenerateReport": {
+								"schema": {
+									"value": "@pipeline().parameters.target_schema",
+									"type": "Expression"
+								},
+								"table": {
+									"value": "@pipeline().parameters.target_table",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"parameters": {
+			"source_schema": {
+				"type": "string",
+				"defaultValue": "prep"
+			},
+			"source_order_table": {
+				"type": "string",
+				"defaultValue": "order_details"
+			},
+			"source_customer_table": {
+				"type": "string",
+				"defaultValue": "customer_details"
+			},
+			"target_schema": {
+				"type": "string",
+				"defaultValue": "report"
+			},
+			"target_table": {
+				"type": "string",
+				"defaultValue": "final_details"
+			}
+		},
+		"folder": {
+			"name": "Reporting pipeline"
+		},
+		"annotations": []
+	}
+}

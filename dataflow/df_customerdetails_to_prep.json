@@ -1,0 +1,90 @@
+{
+	"name": "df_customerdetails_to_prep",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_sqldb_table",
+						"type": "DatasetReference"
+					},
+					"name": "customerdetailsstaging"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_sqldb_table",
+						"type": "DatasetReference"
+					},
+					"name": "customerdetailsprep"
+				}
+			],
+			"transformations": [
+				{
+					"name": "RemoveDuplicateCustomers",
+					"description": "remove duplicate customer details"
+				},
+				{
+					"name": "FilteringExtraColumn",
+					"description": "Email, PhoneNumber, Address, City, State, ZipCode, Country'"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CustomerID as string,",
+				"          FirstName as string,",
+				"          LastName as string,",
+				"          Email as string,",
+				"          PhoneNumber as string,",
+				"          Address as string,",
+				"          City as string,",
+				"          State as string,",
+				"          ZipCode as float,",
+				"          Country as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> customerdetailsstaging",
+				"customerdetailsstaging aggregate(groupBy(CustomerID,",
+				"          FirstName,",
+				"          LastName,",
+				"          Email,",
+				"          PhoneNumber,",
+				"          Address,",
+				"          City,",
+				"          State,",
+				"          ZipCode,",
+				"          Country),",
+				"     temp = sum(ZipCode)) ~> RemoveDuplicateCustomers",
+				"RemoveDuplicateCustomers select(mapColumn(",
+				"          CustomerID,",
+				"          FirstName,",
+				"          LastName,",
+				"          Email,",
+				"          PhoneNumber,",
+				"          Address,",
+				"          City,",
+				"          State,",
+				"          ZipCode,",
+				"          Country",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> FilteringExtraColumn",
+				"FilteringExtraColumn sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     truncate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> customerdetailsprep"
+			]
+		}
+	}
+}

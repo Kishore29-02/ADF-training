@@ -1,0 +1,79 @@
+{
+	"name": "df_orderdetails_to_prep",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_sqldb_table",
+						"type": "DatasetReference"
+					},
+					"name": "orderdetailsstaging"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_sqldb_table",
+						"type": "DatasetReference"
+					},
+					"name": "orderdetailsprep"
+				}
+			],
+			"transformations": [
+				{
+					"name": "RemoveDuplicates"
+				},
+				{
+					"name": "FilterExtraColumn"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          OrderID as string,",
+				"          ProductID as string,",
+				"          ProductName as string,",
+				"          Quantity as string,",
+				"          OrderTimestamp as string,",
+				"          Price as float,",
+				"          CustomerID as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> orderdetailsstaging",
+				"orderdetailsstaging aggregate(groupBy(OrderID,",
+				"          ProductID,",
+				"          ProductName,",
+				"          Quantity,",
+				"          OrderTimestamp,",
+				"          Price,",
+				"          CustomerID),",
+				"     temp = avg(Price)) ~> RemoveDuplicates",
+				"RemoveDuplicates select(mapColumn(",
+				"          OrderID,",
+				"          ProductID,",
+				"          ProductName,",
+				"          Quantity,",
+				"          OrderTimestamp,",
+				"          Price,",
+				"          CustomerID",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> FilterExtraColumn",
+				"FilterExtraColumn sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     recreate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> orderdetailsprep"
+			]
+		}
+	}
+}

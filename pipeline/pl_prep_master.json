@@ -1,0 +1,86 @@
+{
+	"name": "pl_prep_master",
+	"properties": {
+		"activities": [
+			{
+				"name": "CustomerDetailsMigration",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_customerdetails_to_prep",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"customerdetailsstaging": {
+								"schema": "staging",
+								"table": "customer_details"
+							},
+							"customerdetailsprep": {
+								"schema": "prep",
+								"table": "customer_details"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "OrderDetailsMigration",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "CustomerDetailsMigration",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_orderdetails_to_prep",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"orderdetailsstaging": {
+								"schema": "staging",
+								"table": "order_details"
+							},
+							"orderdetailsprep": {
+								"schema": "prep",
+								"table": "order_details"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"folder": {
+			"name": "Prep pipeline"
+		},
+		"annotations": []
+	}
+}
