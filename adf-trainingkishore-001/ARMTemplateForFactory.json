@@ -184,7 +184,7 @@
 					}
 				},
 				"folder": {
-					"name": "Staging Pipeline/Dump into database"
+					"name": "Question1/Staging Pipeline/Dump into database"
 				},
 				"annotations": [],
 				"lastPublishTime": "2024-08-27T05:00:47Z"
@@ -324,7 +324,7 @@
 					}
 				},
 				"folder": {
-					"name": "Staging Pipeline/Customer details"
+					"name": "Question1/Staging Pipeline/Customer details"
 				},
 				"annotations": [],
 				"lastPublishTime": "2024-08-27T05:00:47Z"
@@ -459,7 +459,7 @@
 					}
 				},
 				"folder": {
-					"name": "Staging Pipeline/order details"
+					"name": "Question1/Staging Pipeline/order details"
 				},
 				"annotations": [],
 				"lastPublishTime": "2024-08-27T05:00:47Z"
@@ -560,7 +560,7 @@
 					"elapsedTimeMetric": {}
 				},
 				"folder": {
-					"name": "Prep pipeline"
+					"name": "Question1/Prep pipeline"
 				},
 				"annotations": []
 			},
@@ -660,12 +660,88 @@
 					}
 				},
 				"folder": {
-					"name": "Reporting pipeline"
+					"name": "Question1/Reporting pipeline"
 				},
 				"annotations": []
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/df_final_report')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_staging_dump')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ExcelSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false,
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_blob_superstore",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_sqldb_table",
+								"type": "DatasetReference",
+								"parameters": {
+									"schema": "staging2",
+									"table": "store"
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Question2/Staging pipeline"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_blob_superstore')]",
+				"[concat(variables('factoryId'), '/datasets/ds_sqldb_table')]"
 			]
 		},
 		{
@@ -730,7 +806,7 @@
 					"elapsedTimeMetric": {}
 				},
 				"folder": {
-					"name": "Staging Pipeline"
+					"name": "Question1/Staging Pipeline"
 				},
 				"annotations": [],
 				"lastPublishTime": "2024-08-26T11:39:01Z"
@@ -753,6 +829,9 @@
 					"file_name": {
 						"type": "string"
 					}
+				},
+				"folder": {
+					"name": "Question1"
 				},
 				"annotations": [],
 				"type": "DelimitedText",
@@ -784,6 +863,9 @@
 				"linkedServiceName": {
 					"referenceName": "ls_blob_inputservice",
 					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Question1"
 				},
 				"annotations": [],
 				"type": "DelimitedText",
@@ -853,6 +935,9 @@
 					"referenceName": "ls_blob_inputservice",
 					"type": "LinkedServiceReference"
 				},
+				"folder": {
+					"name": "Question1"
+				},
 				"annotations": [],
 				"type": "Excel",
 				"typeProperties": {
@@ -899,6 +984,120 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_blob_superstore')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_blob_inputservice",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Question2"
+				},
+				"annotations": [],
+				"type": "Excel",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "240826 Superstore.xlsx",
+						"container": "input-container-q2"
+					},
+					"sheetIndex": 0,
+					"firstRowAsHeader": true
+				},
+				"schema": [
+					{
+						"name": "Row ID",
+						"type": "String"
+					},
+					{
+						"name": "Order ID",
+						"type": "String"
+					},
+					{
+						"name": "Order Date",
+						"type": "String"
+					},
+					{
+						"name": "Ship Date",
+						"type": "String"
+					},
+					{
+						"name": "Ship Mode",
+						"type": "String"
+					},
+					{
+						"name": "Customer ID",
+						"type": "String"
+					},
+					{
+						"name": "Customer Name",
+						"type": "String"
+					},
+					{
+						"name": "Segment",
+						"type": "String"
+					},
+					{
+						"name": "Country",
+						"type": "String"
+					},
+					{
+						"name": "City",
+						"type": "String"
+					},
+					{
+						"name": "State",
+						"type": "String"
+					},
+					{
+						"name": "Postal Code",
+						"type": "String"
+					},
+					{
+						"name": "Region",
+						"type": "String"
+					},
+					{
+						"name": "Product ID",
+						"type": "String"
+					},
+					{
+						"name": "Category",
+						"type": "String"
+					},
+					{
+						"name": "Sub-Category",
+						"type": "String"
+					},
+					{
+						"name": "Product Name",
+						"type": "String"
+					},
+					{
+						"name": "Sales",
+						"type": "String"
+					},
+					{
+						"name": "Quantity",
+						"type": "String"
+					},
+					{
+						"name": "Discount",
+						"type": "String"
+					},
+					{
+						"name": "Profit",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_blob_inputservice')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_sqldb_table')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -915,6 +1114,9 @@
 					"table": {
 						"type": "string"
 					}
+				},
+				"folder": {
+					"name": "Question1"
 				},
 				"annotations": [],
 				"type": "AzureSqlTable",
@@ -974,6 +1176,9 @@
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"folder": {
+					"name": "Question1"
+				},
 				"type": "MappingDataFlow",
 				"typeProperties": {
 					"sources": [
@@ -1069,6 +1274,9 @@
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"folder": {
+					"name": "Question1"
+				},
 				"type": "MappingDataFlow",
 				"typeProperties": {
 					"sources": [
@@ -1176,6 +1384,9 @@
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"folder": {
+					"name": "practise"
+				},
 				"type": "MappingDataFlow",
 				"typeProperties": {
 					"sources": [
@@ -1289,6 +1500,9 @@
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"folder": {
+					"name": "Question1"
+				},
 				"type": "MappingDataFlow",
 				"typeProperties": {
 					"sources": [
