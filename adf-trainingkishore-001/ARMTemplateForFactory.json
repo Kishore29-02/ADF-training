@@ -82,6 +82,9 @@
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
+				"folder": {
+					"name": "practise"
+				},
 				"annotations": [],
 				"lastPublishTime": "2024-08-27T08:20:10Z"
 			},
@@ -468,6 +471,204 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_prep_master')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "CustomerDetailsMigration",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_customerdetails_to_prep",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"customerdetailsstaging": {
+										"schema": "staging",
+										"table": "customer_details"
+									},
+									"customerdetailsprep": {
+										"schema": "prep",
+										"table": "customer_details"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "OrderDetailsMigration",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "CustomerDetailsMigration",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_orderdetails_to_prep",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"orderdetailsstaging": {
+										"schema": "staging",
+										"table": "order_details"
+									},
+									"orderdetailsprep": {
+										"schema": "prep",
+										"table": "order_details"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "Prep pipeline"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_customerdetails_to_prep')]",
+				"[concat(variables('factoryId'), '/dataflows/df_orderdetails_to_prep')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_reporting')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "generateReport",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_final_report",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"CustomerDetailsPrep": {
+										"schema": {
+											"value": "@pipeline().parameters.source_schema",
+											"type": "Expression"
+										},
+										"table": {
+											"value": "@pipeline().parameters.source_customer_table",
+											"type": "Expression"
+										}
+									},
+									"OrderDetailsPerp": {
+										"schema": {
+											"value": "@pipeline().parameters.source_schema",
+											"type": "Expression"
+										},
+										"table": {
+											"value": "@pipeline().parameters.source_order_table",
+											"type": "Expression"
+										}
+									},
+									"GenerateReport": {
+										"schema": {
+											"value": "@pipeline().parameters.target_schema",
+											"type": "Expression"
+										},
+										"table": {
+											"value": "@pipeline().parameters.target_table",
+											"type": "Expression"
+										}
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"source_schema": {
+						"type": "string",
+						"defaultValue": "prep"
+					},
+					"source_order_table": {
+						"type": "string",
+						"defaultValue": "order_details"
+					},
+					"source_customer_table": {
+						"type": "string",
+						"defaultValue": "customer_details"
+					},
+					"target_schema": {
+						"type": "string",
+						"defaultValue": "report"
+					},
+					"target_table": {
+						"type": "string",
+						"defaultValue": "final_details"
+					}
+				},
+				"folder": {
+					"name": "Reporting pipeline"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_final_report')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_staging_master')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -540,75 +741,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_blob_customer_dump')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_blob_inputservice",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "DelimitedText",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "customerdetails",
-						"container": "consolidated-container"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
-				},
-				"schema": [
-					{
-						"name": "CustomerID",
-						"type": "String"
-					},
-					{
-						"name": "FirstName",
-						"type": "String"
-					},
-					{
-						"name": "LastName",
-						"type": "String"
-					},
-					{
-						"name": "Email",
-						"type": "String"
-					},
-					{
-						"name": "PhoneNumber",
-						"type": "String"
-					},
-					{
-						"name": "Address",
-						"type": "String"
-					},
-					{
-						"name": "City",
-						"type": "String"
-					},
-					{
-						"name": "State",
-						"type": "String"
-					},
-					{
-						"name": "ZipCode",
-						"type": "String"
-					},
-					{
-						"name": "Country",
-						"type": "String"
-					}
-				]
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_blob_inputservice')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/ds_blob_merge_destination_container')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -639,63 +771,6 @@
 					"quoteChar": "\""
 				},
 				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_blob_inputservice')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_blob_order_dump')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_blob_inputservice",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "DelimitedText",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "orderdetails",
-						"container": "consolidated-container"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
-				},
-				"schema": [
-					{
-						"name": "OrderID",
-						"type": "String"
-					},
-					{
-						"name": "ProductID",
-						"type": "String"
-					},
-					{
-						"name": "ProductName",
-						"type": "String"
-					},
-					{
-						"name": "Quantity",
-						"type": "String"
-					},
-					{
-						"name": "OrderTimestamp",
-						"type": "String"
-					},
-					{
-						"name": "Price",
-						"type": "String"
-					},
-					{
-						"name": "CustomerID",
-						"type": "String"
-					}
-				]
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/ls_blob_inputservice')]"
@@ -824,27 +899,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_sqldb_order_table')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_sqldb",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [],
-				"typeProperties": {
-					"schema": "raw",
-					"table": "orderdetail"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_sqldb')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/ds_sqldb_table')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -914,6 +968,208 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_customerdetails_to_prep')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sqldb_table",
+								"type": "DatasetReference"
+							},
+							"name": "customerdetailsstaging"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_sqldb_table",
+								"type": "DatasetReference"
+							},
+							"name": "customerdetailsprep"
+						}
+					],
+					"transformations": [
+						{
+							"name": "RemoveDuplicateCustomers",
+							"description": "remove duplicate customer details"
+						},
+						{
+							"name": "FilteringExtraColumn",
+							"description": "Email, PhoneNumber, Address, City, State, ZipCode, Country'"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          CustomerID as string,",
+						"          FirstName as string,",
+						"          LastName as string,",
+						"          Email as string,",
+						"          PhoneNumber as string,",
+						"          Address as string,",
+						"          City as string,",
+						"          State as string,",
+						"          ZipCode as float,",
+						"          Country as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> customerdetailsstaging",
+						"customerdetailsstaging aggregate(groupBy(CustomerID,",
+						"          FirstName,",
+						"          LastName,",
+						"          Email,",
+						"          PhoneNumber,",
+						"          Address,",
+						"          City,",
+						"          State,",
+						"          ZipCode,",
+						"          Country),",
+						"     temp = sum(ZipCode)) ~> RemoveDuplicateCustomers",
+						"RemoveDuplicateCustomers select(mapColumn(",
+						"          CustomerID,",
+						"          FirstName,",
+						"          LastName,",
+						"          Email,",
+						"          PhoneNumber,",
+						"          Address,",
+						"          City,",
+						"          State,",
+						"          ZipCode,",
+						"          Country",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> FilteringExtraColumn",
+						"FilteringExtraColumn sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     truncate:true,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> customerdetailsprep"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_sqldb_table')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_final_report')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sqldb_table",
+								"type": "DatasetReference"
+							},
+							"name": "CustomerDetailsPrep"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_sqldb_table",
+								"type": "DatasetReference"
+							},
+							"name": "OrderDetailsPerp"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_sqldb_table",
+								"type": "DatasetReference"
+							},
+							"name": "GenerateReport"
+						}
+					],
+					"transformations": [
+						{
+							"name": "Join"
+						},
+						{
+							"name": "Filtering"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          CustomerID as string,",
+						"          FirstName as string,",
+						"          LastName as string,",
+						"          Email as string,",
+						"          PhoneNumber as string,",
+						"          Address as string,",
+						"          City as string,",
+						"          State as string,",
+						"          ZipeCode as double,",
+						"          Country as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> CustomerDetailsPrep",
+						"source(output(",
+						"          OrderID as string,",
+						"          ProductID as string,",
+						"          ProductName as string,",
+						"          Quantity as string,",
+						"          OrderTimestamp as string,",
+						"          Price as float,",
+						"          CustomerID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> OrderDetailsPerp",
+						"CustomerDetailsPrep, OrderDetailsPerp join(CustomerDetailsPrep@CustomerID == OrderDetailsPerp@CustomerID,",
+						"     joinType:'right',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> Join",
+						"Join select(mapColumn(",
+						"          CustomerID = CustomerDetailsPrep@CustomerID,",
+						"          FirstName,",
+						"          LastName,",
+						"          City,",
+						"          OrderID,",
+						"          ProductID,",
+						"          ProductName,",
+						"          Quantity,",
+						"          OrderTimestamp,",
+						"          Price",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> Filtering",
+						"Filtering sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     recreate:true,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> GenerateReport"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_sqldb_table')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/df_order_netprice')]",
@@ -1021,6 +1277,90 @@
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     errorHandlingOption: 'stopOnFirstError') ~> Sink"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_sqldb_table')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_orderdetails_to_prep')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_sqldb_table",
+								"type": "DatasetReference"
+							},
+							"name": "orderdetailsstaging"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_sqldb_table",
+								"type": "DatasetReference"
+							},
+							"name": "orderdetailsprep"
+						}
+					],
+					"transformations": [
+						{
+							"name": "RemoveDuplicates"
+						},
+						{
+							"name": "FilterExtraColumn"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          OrderID as string,",
+						"          ProductID as string,",
+						"          ProductName as string,",
+						"          Quantity as string,",
+						"          OrderTimestamp as string,",
+						"          Price as float,",
+						"          CustomerID as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> orderdetailsstaging",
+						"orderdetailsstaging aggregate(groupBy(OrderID,",
+						"          ProductID,",
+						"          ProductName,",
+						"          Quantity,",
+						"          OrderTimestamp,",
+						"          Price,",
+						"          CustomerID),",
+						"     temp = avg(Price)) ~> RemoveDuplicates",
+						"RemoveDuplicates select(mapColumn(",
+						"          OrderID,",
+						"          ProductID,",
+						"          ProductName,",
+						"          Quantity,",
+						"          OrderTimestamp,",
+						"          Price,",
+						"          CustomerID",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> FilterExtraColumn",
+						"FilterExtraColumn sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     recreate:true,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> orderdetailsprep"
 					]
 				}
 			},
