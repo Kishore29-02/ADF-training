@@ -137,7 +137,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_blob_destination_customer')]",
+			"name": "[concat(parameters('factoryName'), '/ds_blob_destination_merges')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -145,13 +145,21 @@
 					"referenceName": "ls_blob_inputservice",
 					"type": "LinkedServiceReference"
 				},
+				"parameters": {
+					"file_name": {
+						"type": "string"
+					}
+				},
 				"annotations": [],
 				"type": "DelimitedText",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
-						"fileName": "customerdetails",
-						"container": "consolidated-container"
+						"fileName": {
+							"value": "@dataset().file_name",
+							"type": "Expression"
+						},
+						"container": "consolidated-folder"
 					},
 					"columnDelimiter": ",",
 					"escapeChar": "\\",
@@ -263,7 +271,7 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
-						"container": "input-container"
+						"container": "input-container-new"
 					},
 					"columnDelimiter": ",",
 					"escapeChar": "\\",
@@ -429,13 +437,13 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_dump_customerdetails')]",
+			"name": "[concat(parameters('factoryName'), '/pl_dump_into_database')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "Dump order table",
+						"name": "Dump table into db",
 						"type": "Copy",
 						"dependsOn": [],
 						"policy": {
@@ -477,9 +485,14 @@
 						},
 						"inputs": [
 							{
-								"referenceName": "ds_blob_customer_dump",
+								"referenceName": "ds_blob_destination_merges",
 								"type": "DatasetReference",
-								"parameters": {}
+								"parameters": {
+									"file_name": {
+										"value": "@pipeline().parameters.source_file_name",
+										"type": "Expression"
+									}
+								}
 							}
 						],
 						"outputs": [
@@ -487,8 +500,14 @@
 								"referenceName": "ds_sqldb_table",
 								"type": "DatasetReference",
 								"parameters": {
-									"schema": "raw",
-									"table": "customerdetails"
+									"schema": {
+										"value": "@pipeline().parameters.schema_name",
+										"type": "Expression"
+									},
+									"table": {
+										"value": "@pipeline().parameters.table_name",
+										"type": "Expression"
+									}
 								}
 							}
 						]
@@ -496,6 +515,17 @@
 				],
 				"policy": {
 					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"source_file_name": {
+						"type": "string"
+					},
+					"schema_name": {
+						"type": "string"
+					},
+					"table_name": {
+						"type": "string"
+					}
 				},
 				"folder": {
 					"name": "PL_dump_data"
@@ -504,171 +534,8 @@
 				"lastPublishTime": "2024-08-27T05:00:47Z"
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_blob_customer_dump')]",
+				"[concat(variables('factoryId'), '/datasets/ds_blob_destination_merges')]",
 				"[concat(variables('factoryId'), '/datasets/ds_sqldb_table')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pl_dump_orderdetails')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Dump order table",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "AzureBlobStorageReadSettings",
-									"recursive": false,
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings"
-								}
-							},
-							"sink": {
-								"type": "AzureSqlSink",
-								"writeBehavior": "insert",
-								"sqlWriterUseTableLock": false,
-								"tableOption": "autoCreate",
-								"disableMetricsCollection": false
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "ds_blob_order_dump",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "ds_sqldb_table",
-								"type": "DatasetReference",
-								"parameters": {
-									"schema": "raw",
-									"table": "orderdetails"
-								}
-							}
-						]
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"folder": {
-					"name": "PL_dump_data"
-				},
-				"annotations": [],
-				"lastPublishTime": "2024-08-27T05:00:47Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_blob_order_dump')]",
-				"[concat(variables('factoryId'), '/datasets/ds_sqldb_table')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pl_merge_customerdetails')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Copy customer details",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "AzureBlobStorageReadSettings",
-									"recursive": true,
-									"wildcardFileName": "*customerdetails.csv",
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings"
-								}
-							},
-							"sink": {
-								"type": "DelimitedTextSink",
-								"storeSettings": {
-									"type": "AzureBlobStorageWriteSettings",
-									"copyBehavior": "MergeFiles"
-								},
-								"formatSettings": {
-									"type": "DelimitedTextWriteSettings",
-									"quoteAllText": true,
-									"fileExtension": ".txt"
-								}
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "ds_blob_source_customer",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "ds_blob_destination_customer",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						]
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"folder": {
-					"name": "PL_merge"
-				},
-				"annotations": [],
-				"lastPublishTime": "2024-08-27T05:00:47Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_blob_source_customer')]",
-				"[concat(variables('factoryId'), '/datasets/ds_blob_destination_customer')]"
 			]
 		},
 		{
@@ -922,7 +789,148 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_merger')]",
+			"name": "[concat(parameters('factoryName'), '/pl_merge_customerdetails')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Merge customer details",
+						"description": "Merge customer details into single file",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"wildcardFileName": "*customerdetails.csv",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"copyBehavior": "MergeFiles"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_blob_source_customer",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_blob_destination_merges",
+								"type": "DatasetReference",
+								"parameters": {
+									"file_name": {
+										"value": "@pipeline().parameters.target_file_name",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Dump into customer details table",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Merge customer details",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_dump_into_database",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"source_file_name": {
+									"value": "@pipeline().parameters.target_file_name",
+									"type": "Expression"
+								},
+								"schema_name": {
+									"value": "@pipeline().parameters.schema_name",
+									"type": "Expression"
+								},
+								"table_name": {
+									"value": "@pipeline().parameters.table_name",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"target_file_name": {
+						"type": "string",
+						"defaultValue": "temp_file"
+					},
+					"schema_name": {
+						"type": "string",
+						"defaultValue": "temp_schema"
+					},
+					"table_name": {
+						"type": "string",
+						"defaultValue": "temp_table"
+					}
+				},
+				"folder": {
+					"name": "PL_merge"
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-08-27T05:00:47Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_blob_source_customer')]",
+				"[concat(variables('factoryId'), '/datasets/ds_blob_destination_merges')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_dump_into_database')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_staging')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -942,7 +950,10 @@
 								"type": "PipelineReference"
 							},
 							"waitOnCompletion": true,
-							"parameters": {}
+							"parameters": {
+								"schema_name": "staging",
+								"table_name": "customer_details"
+							}
 						}
 					},
 					{
