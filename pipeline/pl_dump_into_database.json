@@ -1,9 +1,9 @@
 {
-	"name": "pl_dump_customerdetails",
+	"name": "pl_dump_into_database",
 	"properties": {
 		"activities": [
 			{
-				"name": "Dump order table",
+				"name": "Dump table into db",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -45,8 +45,14 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "ds_blob_customer_dump",
-						"type": "DatasetReference"
+						"referenceName": "ds_blob_destination_merges",
+						"type": "DatasetReference",
+						"parameters": {
+							"file_name": {
+								"value": "@pipeline().parameters.source_file_name",
+								"type": "Expression"
+							}
+						}
 					}
 				],
 				"outputs": [
@@ -54,13 +60,30 @@
 						"referenceName": "ds_sqldb_table",
 						"type": "DatasetReference",
 						"parameters": {
-							"schema": "raw",
-							"table": "customerdetails"
+							"schema": {
+								"value": "@pipeline().parameters.schema_name",
+								"type": "Expression"
+							},
+							"table": {
+								"value": "@pipeline().parameters.table_name",
+								"type": "Expression"
+							}
 						}
 					}
 				]
 			}
 		],
+		"parameters": {
+			"source_file_name": {
+				"type": "string"
+			},
+			"schema_name": {
+				"type": "string"
+			},
+			"table_name": {
+				"type": "string"
+			}
+		},
 		"folder": {
 			"name": "PL_dump_data"
 		},

@@ -70,8 +70,8 @@
 				]
 			},
 			{
-				"name": "Copy data1",
-				"type": "Copy",
+				"name": "Dump into customer details table",
+				"type": "ExecutePipeline",
 				"dependsOn": [
 					{
 						"activity": "Merge customer details",
@@ -81,82 +81,44 @@
 					}
 				],
 				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
 					"secureInput": false
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"source": {
-						"type": "DelimitedTextSource",
-						"storeSettings": {
-							"type": "AzureBlobStorageReadSettings",
-							"recursive": true,
-							"enablePartitionDiscovery": false
+					"pipeline": {
+						"referenceName": "pl_dump_into_database",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"source_file_name": {
+							"value": "@pipeline().parameters.target_file_name",
+							"type": "Expression"
 						},
-						"formatSettings": {
-							"type": "DelimitedTextReadSettings"
-						}
-					},
-					"sink": {
-						"type": "AzureSqlSink",
-						"writeBehavior": "insert",
-						"sqlWriterUseTableLock": false
-					},
-					"enableStaging": false,
-					"translator": {
-						"type": "TabularTranslator",
-						"typeConversion": true,
-						"typeConversionSettings": {
-							"allowDataTruncation": true,
-							"treatBooleanAsNumber": false
+						"schema_name": {
+							"value": "@pipeline().parameters.schema_name",
+							"type": "Expression"
+						},
+						"table_name": {
+							"value": "@pipeline().parameters.table_name",
+							"type": "Expression"
 						}
 					}
-				},
-				"inputs": [
-					{
-						"referenceName": "ds_blob_destination_merges",
-						"type": "DatasetReference",
-						"parameters": {
-							"file_name": {
-								"value": "@pipeline().parameters.file_name",
-								"type": "Expression"
-							}
-						}
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "ds_sqldb_table",
-						"type": "DatasetReference",
-						"parameters": {
-							"schema": {
-								"value": "@pipeline().parameters.schema_name",
-								"type": "Expression"
-							},
-							"table": {
-								"value": "@pipeline().parameters.table_name",
-								"type": "Expression"
-							}
-						}
-					}
-				]
+				}
 			}
 		],
 		"parameters": {
 			"target_file_name": {
 				"type": "string",
-				"defaultValue": "tempe"
+				"defaultValue": "temp_file"
 			},
 			"schema_name": {
 				"type": "string",
-				"defaultValue": "temp1"
+				"defaultValue": "temp_schema"
 			},
 			"table_name": {
 				"type": "string",
-				"defaultValue": "tee"
+				"defaultValue": "temp_table"
 			}
 		},
 		"folder": {
