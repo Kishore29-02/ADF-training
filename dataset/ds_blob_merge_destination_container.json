@@ -1,5 +1,5 @@
 {
-	"name": "ds_blob_destination_merges",
+	"name": "ds_blob_merge_destination_container",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "ls_blob_inputservice",

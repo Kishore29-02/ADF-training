@@ -58,7 +58,7 @@
 				],
 				"outputs": [
 					{
-						"referenceName": "ds_blob_destination_merges",
+						"referenceName": "ds_blob_merge_destination_container",
 						"type": "DatasetReference",
 						"parameters": {
 							"file_name": {
@@ -122,7 +122,7 @@
 			}
 		},
 		"folder": {
-			"name": "PL_merge"
+			"name": "Staging Pipeline/Customer details"
 		},
 		"annotations": [],
 		"lastPublishTime": "2024-08-27T05:00:47Z"

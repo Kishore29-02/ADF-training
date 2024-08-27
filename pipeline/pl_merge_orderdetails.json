@@ -3,7 +3,8 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Copy orders details",
+				"name": "Merge order details",
+				"description": "Merge customer details into a single file",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -54,14 +55,68 @@
 				],
 				"outputs": [
 					{
-						"referenceName": "ds_blob_destination_order",
-						"type": "DatasetReference"
+						"referenceName": "ds_blob_merge_destination_container",
+						"type": "DatasetReference",
+						"parameters": {
+							"file_name": {
+								"value": "@pipeline().parameters.target_file_name",
+								"type": "Expression"
+							}
+						}
 					}
 				]
+			},
+			{
+				"name": "Execute Pipeline1",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Merge order details",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_dump_into_database",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"source_file_name": {
+							"value": "@pipeline().parameters.target_file_name",
+							"type": "Expression"
+						},
+						"schema_name": {
+							"value": "@pipeline().parameters.schema_name",
+							"type": "Expression"
+						},
+						"table_name": {
+							"value": "@pipeline().parameters.table_name",
+							"type": "Expression"
+						}
+					}
+				}
 			}
 		],
+		"parameters": {
+			"target_file_name": {
+				"type": "string"
+			},
+			"schema_name": {
+				"type": "string"
+			},
+			"table_name": {
+				"type": "string"
+			}
+		},
 		"folder": {
-			"name": "PL_merge"
+			"name": "Staging Pipeline/order details"
 		},
 		"annotations": [],
 		"lastPublishTime": "2024-08-27T05:00:47Z"
