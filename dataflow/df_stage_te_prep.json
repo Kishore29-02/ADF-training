@@ -1,0 +1,57 @@
+{
+	"name": "df_stage_te_prep",
+	"properties": {
+		"folder": {
+			"name": "Question2"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_sqldb_table",
+						"type": "DatasetReference"
+					},
+					"name": "storedata"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "DateDifference"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          {Row ID} as string,",
+				"          {Order ID} as string,",
+				"          {Order Date} as date,",
+				"          {Ship Date} as date,",
+				"          {Ship Mode} as string,",
+				"          {Customer ID} as string,",
+				"          {Customer Name} as string,",
+				"          Segment as string,",
+				"          Country as string,",
+				"          City as string,",
+				"          State as string,",
+				"          {Postal Code} as string,",
+				"          Region as string,",
+				"          {Product ID} as string,",
+				"          Category as string,",
+				"          {Sub-Category} as string,",
+				"          {Product Name} as string,",
+				"          Sales as string,",
+				"          Quantity as string,",
+				"          Discount as string,",
+				"          Profit as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> storedata",
+				"storedata aggregate(groupBy({Order ID}),",
+				"     shipping_in_days = subDays({Order Date}, {Ship Date})) ~> DateDifference"
+			]
+		}
+	}
+}
