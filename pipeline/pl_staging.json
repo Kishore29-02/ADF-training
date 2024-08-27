@@ -1,5 +1,5 @@
 {
-	"name": "pl_merger",
+	"name": "pl_staging",
 	"properties": {
 		"activities": [
 			{
@@ -16,7 +16,11 @@
 						"referenceName": "pl_merge_customerdetails",
 						"type": "PipelineReference"
 					},
-					"waitOnCompletion": true
+					"waitOnCompletion": true,
+					"parameters": {
+						"schema_name": "staging",
+						"table_name": "customer_details"
+					}
 				}
 			},
 			{

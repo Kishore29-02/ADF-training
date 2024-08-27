@@ -1,17 +1,25 @@
 {
-	"name": "ds_blob_destination_customer",
+	"name": "ds_blob_destination_merges",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "ls_blob_inputservice",
 			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"file_name": {
+				"type": "string"
+			}
 		},
 		"annotations": [],
 		"type": "DelimitedText",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"fileName": "customerdetails",
-				"container": "consolidated-container"
+				"fileName": {
+					"value": "@dataset().file_name",
+					"type": "Expression"
+				},
+				"container": "consolidated-folder"
 			},
 			"columnDelimiter": ",",
 			"escapeChar": "\\",
