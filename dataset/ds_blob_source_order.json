@@ -5,6 +5,9 @@
 			"referenceName": "ls_blob_inputservice",
 			"type": "LinkedServiceReference"
 		},
+		"folder": {
+			"name": "Question1"
+		},
 		"annotations": [],
 		"type": "Excel",
 		"typeProperties": {

@@ -1,6 +1,9 @@
 {
 	"name": "df_order_netprice",
 	"properties": {
+		"folder": {
+			"name": "practise"
+		},
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [

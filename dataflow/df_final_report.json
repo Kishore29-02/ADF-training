@@ -1,6 +1,9 @@
 {
 	"name": "df_final_report",
 	"properties": {
+		"folder": {
+			"name": "Question1"
+		},
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [

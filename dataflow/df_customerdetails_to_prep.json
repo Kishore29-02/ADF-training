@@ -1,6 +1,9 @@
 {
 	"name": "df_customerdetails_to_prep",
 	"properties": {
+		"folder": {
+			"name": "Question1"
+		},
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [
