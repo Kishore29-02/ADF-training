@@ -1,0 +1,108 @@
+{
+	"name": "df_order_netprice",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_sqldb_table",
+						"type": "DatasetReference"
+					},
+					"name": "OrderDetails",
+					"description": "Import data from orderdetails table"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_sqldb_table",
+						"type": "DatasetReference"
+					},
+					"name": "Customerdetails",
+					"description": "import data from customerdetails table "
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_sqldb_table",
+						"type": "DatasetReference"
+					},
+					"name": "Sink",
+					"description": "Store in new table"
+				}
+			],
+			"transformations": [
+				{
+					"name": "AddColumn",
+					"description": "Add \"net_price\" column to \"orderdetails\" table"
+				},
+				{
+					"name": "JoinTable",
+					"description": "Join orderdetails table and customerdetails table using customerid"
+				},
+				{
+					"name": "TotalPurchaseofCustomer",
+					"description": "Find the total price spend by the customer"
+				},
+				{
+					"name": "RankingCustomers",
+					"description": "Ranking customer based on net spending"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          OrderID as string,",
+				"          ProductID as string,",
+				"          ProductName as string,",
+				"          Quantity as integer,",
+				"          OrderTimestamp as string,",
+				"          Price as float,",
+				"          CustomerID as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> OrderDetails",
+				"source(output(",
+				"          CustomerID as string,",
+				"          FirstName as string,",
+				"          LastName as string,",
+				"          Email as string,",
+				"          PhoneNumber as string,",
+				"          Address as string,",
+				"          City as string,",
+				"          State as string,",
+				"          ZipCode as string,",
+				"          Country as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> Customerdetails",
+				"OrderDetails derive(net_price = Price*Quantity) ~> AddColumn",
+				"AddColumn, Customerdetails join(OrderDetails@CustomerID == Customerdetails@CustomerID,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinTable",
+				"JoinTable aggregate(groupBy(CustomerId = Customerdetails@CustomerID,",
+				"          FirstName,",
+				"          LastName,",
+				"          Email),",
+				"     total_cost = sum(net_price)) ~> TotalPurchaseofCustomer",
+				"TotalPurchaseofCustomer rank(desc(total_cost, true),",
+				"     output(Rank as long)) ~> RankingCustomers",
+				"RankingCustomers sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> Sink"
+			]
+		}
+	}
+}

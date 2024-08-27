@@ -1,0 +1,17 @@
+{
+	"name": "ds_sqldb_order_table",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sqldb",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "raw",
+			"table": "orderdetail"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

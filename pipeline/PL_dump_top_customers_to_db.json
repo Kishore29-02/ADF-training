@@ -1,0 +1,48 @@
+{
+	"name": "PL_dump_top_customers_to_db",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get top purchasing customers",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_order_netprice",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"OrderDetails": {
+								"schema": "raw",
+								"table": "orderdetails"
+							},
+							"Customerdetails": {
+								"schema": "raw",
+								"table": "customerdetails"
+							},
+							"Sink": {
+								"schema": "raw",
+								"table": "top_customers"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Coarse"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2024-08-27T08:20:10Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

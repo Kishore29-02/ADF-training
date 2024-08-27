@@ -1,0 +1,24 @@
+{
+	"name": "ds_blob_destination_customer",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_blob_inputservice",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "customerdetails",
+				"container": "consolidated-container"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

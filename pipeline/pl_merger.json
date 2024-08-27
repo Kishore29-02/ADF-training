@@ -1,0 +1,54 @@
+{
+	"name": "pl_merger",
+	"properties": {
+		"activities": [
+			{
+				"name": "Merge customer details",
+				"description": "executes merge pipelines",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_merge_customerdetails",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Merge order details",
+				"description": "executes merge pipelines",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Merge customer details",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_merge_orderdetails",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "PL_merge"
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-08-26T11:39:01Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
